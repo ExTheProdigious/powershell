@@ -158,6 +158,7 @@ $runId = [guid]::NewGuid().Guid
 
 # SKU lookup
 
+Write-Output "Getting SKUs."
 $skus = Get-MgSubscribedSku -All
 
 # skuId -> skuPartNumber
@@ -193,6 +194,8 @@ $skuDisplayNameMap = @{
     "VISIOCLIENT"                       = "Visio Plan 2"
     "VISIO_PLAN2_DEPT"                  = "Visio Plan 2"
 }
+
+Write-Output "Evaluating SKUs."
 
 $skuRows = foreach ($sku in $skus) {
     $skuId = [string]$sku.SkuId
