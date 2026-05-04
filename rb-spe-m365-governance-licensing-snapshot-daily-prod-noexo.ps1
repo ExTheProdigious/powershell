@@ -165,27 +165,12 @@ catch {
     Write-Output $_
 }
 
-try {
-    Write-Output "Attempting EXO login..."
-    Connect-ExchangeOnline -ManagedIdentity -Organization $ExchangeOrganization -ManagedIdentityAccountId $ManagedIdentityAccountId -ShowBanner:$false | Out-Null
-    Write-Output "EXO login SUCCESS"
-}
-catch {
-    Write-Output "EXO login FAILED"
-    Write-Output $_
-}
-
 $monitorToken = Get-MonitorBearerToken
 
 # Snapshot metadata
 
 $snapshotTime = (Get-Date).ToUniversalTime()
 $runId = [guid]::NewGuid().Guid
-
-# Preload EXO hold data
-
-Write-Output "Loading Exchange Online mailbox litigation hold status..."
-$litigationHoldLookup = Get-LitigationHoldLookup
 
 # SKU lookup
 
@@ -354,12 +339,6 @@ $userRows = foreach ($user in $users) {
 		EntraOwnedDeviceCount_d      = [double]$ownedCount
 	}
 
-    $litigationHoldEnabled = $false
-    $userUpnKey = (Get-SafeString $user.UserPrincipalName).ToLowerInvariant()
-    if (-not [string]::IsNullOrWhiteSpace($userUpnKey) -and $litigationHoldLookup.ContainsKey($userUpnKey)) {
-        $litigationHoldEnabled = [bool]$litigationHoldLookup[$userUpnKey]
-    }
-
     [pscustomobject]@{
         SnapshotTime_t                 = $snapshotTime
         RunId_g                        = $runId
@@ -389,8 +368,6 @@ $userRows = foreach ($user in $users) {
         EntraRegisteredDeviceCount_d   = [double]$deviceTelemetry.EntraRegisteredDeviceCount_d
         HasEntraOwnedDevice_b          = [bool]$deviceTelemetry.HasEntraOwnedDevice_b
         EntraOwnedDeviceCount_d        = [double]$deviceTelemetry.EntraOwnedDeviceCount_d
-
-        LitigationHoldEnabled_b        = [bool]$litigationHoldEnabled
     }
 }
 
