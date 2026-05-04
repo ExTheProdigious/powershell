@@ -244,94 +244,94 @@ $skuRows = foreach ($sku in $skus) {
     }
 }
 
-# Users
+# ... (Keep all your Helper functions and SKU lookup the same) ...
 
-Write-Output "Getting users."
+# -----------------------------
+# Users (PAGINATED)
+# -----------------------------
 
-$users = Get-MgUser `
-    -All `
+Write-Output "Starting Paginated User Retrieval."
+
+# Use a page size that balances Graph performance and API calls
+$PageSize = 999 
+$UserCount = 0
+
+# We call Get-MgUser without -All to get the first page and the skip token
+$UserPage = Get-MgUser `
+    -Top $PageSize `
     -Property Id,DisplayName,UserPrincipalName,AssignedLicenses,LicenseAssignmentStates,UsageLocation,AccountEnabled,UserType,Department,CompanyName,OnPremisesSyncEnabled,SignInActivity
 
-Write-Output "Evaluating users."
+# Page Iteration Logic
+do {
+    $userRows = @()
 
-$userRows = foreach ($user in $users) {
-    if (-not $user.AssignedLicenses -or $user.AssignedLicenses.Count -eq 0) { continue }
+    foreach ($user in $UserPage) {
+        # Skip users without licenses to keep the log volume efficient
+        if (-not $user.AssignedLicenses -or $user.AssignedLicenses.Count -eq 0) { continue }
 
-    $assignedSkuIds = @($user.AssignedLicenses | ForEach-Object { [string]$_.SkuId })
-
-    $assignedSkuPartNumbers = foreach ($skuId in $assignedSkuIds) {
-        if ($skuPartNumberMap.ContainsKey($skuId)) {
-            $skuPartNumberMap[$skuId]
+        $assignedSkuIds = @($user.AssignedLicenses | ForEach-Object { [string]$_.SkuId })
+        $assignedSkuPartNumbers = foreach ($skuId in $assignedSkuIds) {
+            if ($skuPartNumberMap.ContainsKey($skuId)) { $skuPartNumberMap[$skuId] } else { "UNKNOWN_SKU" }
         }
-        else {
-            "UNKNOWN_SKU"
+
+        $assignedDisplayNames = foreach ($skuPartNumber in $assignedSkuPartNumbers) {
+            if ($skuDisplayNameMap.ContainsKey($skuPartNumber)) { $skuDisplayNameMap[$skuPartNumber] } else { $skuPartNumber }
+        }
+
+        $assignmentSummary = Get-LicenseAssignmentSummary -LicenseAssignmentStates @($user.LicenseAssignmentStates)
+        
+        $overlappingSkuFlag = [bool](
+            $assignedSkuIds.Count -ne (@($assignedSkuIds | Sort-Object -Unique).Count) -or
+            $assignedSkuPartNumbers.Count -gt 1
+        )
+
+        $userRows += [pscustomobject]@{
+            SnapshotTime_t                 = $snapshotTime
+            RunId_g                        = $runId
+            UserId_g                       = [string]$user.Id
+            UserPrincipalName_s            = Get-SafeString $user.UserPrincipalName
+            DisplayName_s                  = Get-SafeString $user.DisplayName
+            AccountEnabled_b               = [bool]$user.AccountEnabled
+            UserType_s                     = Get-SafeString $user.UserType
+            UsageLocation_s                = Get-SafeString $user.UsageLocation
+            Department_s                   = Get-SafeString $user.Department
+            CompanyName_s                  = Get-SafeString $user.CompanyName
+            OnPremisesSyncEnabled_b        = [bool]$user.OnPremisesSyncEnabled
+            LastSuccessfulSignInDateTime_t = if ($user.SignInActivity.LastSuccessfulSignInDateTime) { [datetime]$user.SignInActivity.LastSuccessfulSignInDateTime } else { $null }
+            AssignedLicenseCount_d         = [double]$assignedSkuIds.Count
+            AssignedSkuIds_s               = (Join-UniqueValues -Values $assignedSkuIds)
+            AssignedSkuPartNumbers_s       = (Join-UniqueValues -Values $assignedSkuPartNumbers)
+            AssignedLicenseDisplayNames_s  = (Join-UniqueValues -Values $assignedDisplayNames)
+            HasGroupAssignedLicense_b      = [bool]$assignmentSummary.HasGroupAssignedLicense_b
+            HasDirectAssignedLicense_b     = [bool]$assignmentSummary.HasDirectAssignedLicense_b
+            LicenseAssignmentMethod_s      = $assignmentSummary.LicenseAssignmentMethod_s
+            AssignedByGroupIds_s           = $assignmentSummary.AssignedByGroupIds_s
+            OverlappingSkuFlag_b           = $overlappingSkuFlag
         }
     }
 
-    $assignedDisplayNames = foreach ($skuPartNumber in $assignedSkuPartNumbers) {
-        if ($skuDisplayNameMap.ContainsKey($skuPartNumber)) {
-            $skuDisplayNameMap[$skuPartNumber]
-        }
-        else {
-            $skuPartNumber
-        }
+    # Ingest the current page immediately
+    if ($userRows.Count -gt 0) {
+        Send-LogIngestionBatch `
+            -Rows $userRows `
+            -DcrImmutableId $DcrImmutableIdUsers `
+            -StreamName $UsersStreamName `
+            -LogsIngestionEndpoint $LogsIngestionEndpoint `
+            -MonitorToken $monitorToken
+        
+        $UserCount += $userRows.Count
+        Write-Output "Processed and sent $UserCount licensed users so far..."
     }
 
-    $licenseAssignmentStates = @()
-    if ($user.LicenseAssignmentStates) {
-        $licenseAssignmentStates = @($user.LicenseAssignmentStates)
+    # Check for the next page link
+    $NextPageLink = $UserPage.PSObject.Properties["@odata.nextLink"].Value
+    if ($NextPageLink) {
+        $UserPage = Get-MgUser -AppendNextPage -NextPageLink $NextPageLink
     }
 
-    $assignmentSummary = Get-LicenseAssignmentSummary -LicenseAssignmentStates $licenseAssignmentStates
+} while ($NextPageLink)
 
-    $overlappingSkuFlag = [bool](
-        $assignedSkuIds.Count -ne (@($assignedSkuIds | Sort-Object -Unique).Count) -or
-        $assignedSkuPartNumbers.Count -gt 1
-    )
-
-	$userId = [string]$user.Id
-
-    [pscustomobject]@{
-        SnapshotTime_t                 = $snapshotTime
-        RunId_g                        = $runId
-        UserId_g                       = [string]$user.Id
-        UserPrincipalName_s            = Get-SafeString $user.UserPrincipalName
-        DisplayName_s                  = Get-SafeString $user.DisplayName
-        AccountEnabled_b               = [bool]$user.AccountEnabled
-        UserType_s                     = Get-SafeString $user.UserType
-        UsageLocation_s                = Get-SafeString $user.UsageLocation
-        Department_s                   = Get-SafeString $user.Department
-        CompanyName_s                  = Get-SafeString $user.CompanyName
-        OnPremisesSyncEnabled_b        = [bool]$user.OnPremisesSyncEnabled
-        LastSuccessfulSignInDateTime_t = if ($user.SignInActivity.LastSuccessfulSignInDateTime) { [datetime]$user.SignInActivity.LastSuccessfulSignInDateTime } else { $null }
-
-        AssignedLicenseCount_d         = [double]$assignedSkuIds.Count
-        AssignedSkuIds_s               = (Join-UniqueValues -Values $assignedSkuIds)
-        AssignedSkuPartNumbers_s       = (Join-UniqueValues -Values $assignedSkuPartNumbers)
-        AssignedLicenseDisplayNames_s  = (Join-UniqueValues -Values $assignedDisplayNames)
-
-        HasGroupAssignedLicense_b      = [bool]$assignmentSummary.HasGroupAssignedLicense_b
-        HasDirectAssignedLicense_b     = [bool]$assignmentSummary.HasDirectAssignedLicense_b
-        LicenseAssignmentMethod_s      = $assignmentSummary.LicenseAssignmentMethod_s
-        AssignedByGroupIds_s           = $assignmentSummary.AssignedByGroupIds_s
-        OverlappingSkuFlag_b           = $overlappingSkuFlag
-
-    }
-}
-
-# -----------------------------
-# Send to Azure Monitor
-# -----------------------------
-
-Write-Output "Sending to LOG."
-
-Send-LogIngestionBatch `
-    -Rows $userRows `
-    -DcrImmutableId $DcrImmutableIdUsers `
-    -StreamName $UsersStreamName `
-    -LogsIngestionEndpoint $LogsIngestionEndpoint `
-    -MonitorToken $monitorToken
-
+# Finalize by sending the SKU metrics (usually small enough for one hit)
 Send-LogIngestionBatch `
     -Rows $skuRows `
     -DcrImmutableId $DcrImmutableIdSku `
@@ -339,4 +339,4 @@ Send-LogIngestionBatch `
     -LogsIngestionEndpoint $LogsIngestionEndpoint `
     -MonitorToken $monitorToken
 
-Write-Output "Posted $($userRows.Count) licensed-user rows and $($skuRows.Count) SKU-metric rows."
+Write-Output "RUNBOOK COMPLETE. Total Licensed Users Processed: $UserCount"
