@@ -125,22 +125,6 @@ function Send-LogIngestionBatch {
     }
 }
 
-function Get-LitigationHoldLookup {
-    $lookup = @{}
-
-    $mailboxes = Get-EXOMailbox -ResultSize Unlimited -Properties UserPrincipalName,LitigationHoldEnabled
-
-    foreach ($mailbox in $mailboxes) {
-        $upn = Get-SafeString $mailbox.UserPrincipalName
-        if (-not [string]::IsNullOrWhiteSpace($upn)) {
-            $lookup[$upn.ToLowerInvariant()] = [bool]$mailbox.LitigationHoldEnabled
-        }
-    }
-
-    return $lookup
-}
-
-
 # Auth
 
 Write-Output "RUNBOOK STARTED"
@@ -259,33 +243,13 @@ $skuRows = foreach ($sku in $skus) {
 
 # Users
 
+Write-Output "Getting users."
+
 $users = Get-MgUser `
     -All `
     -Property Id,DisplayName,UserPrincipalName,AssignedLicenses,LicenseAssignmentStates,UsageLocation,AccountEnabled,UserType,Department,CompanyName,OnPremisesSyncEnabled,SignInActivity
 
-$allDevices = Get-MgDevice -All -Property Id,RegisteredOwners,RegisteredUsers
-$registeredDeviceMap = @{}
-$ownedDeviceMap = @{}
-
-foreach ($device in $allDevices) {
-
-    foreach ($user in $device.RegisteredUsers) {
-        $id = $user.Id
-        if (-not $registeredDeviceMap.ContainsKey($id)) {
-            $registeredDeviceMap[$id] = 0
-        }
-        $registeredDeviceMap[$id]++
-    }
-
-    foreach ($owner in $device.RegisteredOwners) {
-        $id = $owner.Id
-        if (-not $ownedDeviceMap.ContainsKey($id)) {
-            $ownedDeviceMap[$id] = 0
-        }
-        $ownedDeviceMap[$id]++
-    }
-}
-
+Write-Output "Evaluating users."
 
 $userRows = foreach ($user in $users) {
     if (-not $user.AssignedLicenses -or $user.AssignedLicenses.Count -eq 0) { continue }
@@ -324,21 +288,6 @@ $userRows = foreach ($user in $users) {
 
 	$userId = [string]$user.Id
 
-	$registeredCount = if ($registeredDeviceMap.ContainsKey($userId)) {
-    $registeredDeviceMap[$userId]
-	} else { 0 }
-
-	$ownedCount = if ($ownedDeviceMap.ContainsKey($userId)) {
-		$ownedDeviceMap[$userId]
-	} else { 0 }
-
-	$deviceTelemetry = [pscustomobject]@{
-		HasEntraRegisteredDevice_b   = [bool]($registeredCount -gt 0)
-		EntraRegisteredDeviceCount_d = [double]$registeredCount
-		HasEntraOwnedDevice_b        = [bool]($ownedCount -gt 0)
-		EntraOwnedDeviceCount_d      = [double]$ownedCount
-	}
-
     [pscustomobject]@{
         SnapshotTime_t                 = $snapshotTime
         RunId_g                        = $runId
@@ -364,16 +313,14 @@ $userRows = foreach ($user in $users) {
         AssignedByGroupIds_s           = $assignmentSummary.AssignedByGroupIds_s
         OverlappingSkuFlag_b           = $overlappingSkuFlag
 
-        HasEntraRegisteredDevice_b     = [bool]$deviceTelemetry.HasEntraRegisteredDevice_b
-        EntraRegisteredDeviceCount_d   = [double]$deviceTelemetry.EntraRegisteredDeviceCount_d
-        HasEntraOwnedDevice_b          = [bool]$deviceTelemetry.HasEntraOwnedDevice_b
-        EntraOwnedDeviceCount_d        = [double]$deviceTelemetry.EntraOwnedDeviceCount_d
     }
 }
 
 # -----------------------------
 # Send to Azure Monitor
 # -----------------------------
+
+Write-Output "Sending to LOG."
 
 Send-LogIngestionBatch `
     -Rows $userRows `
@@ -388,7 +335,5 @@ Send-LogIngestionBatch `
     -StreamName $SkuStreamName `
     -LogsIngestionEndpoint $LogsIngestionEndpoint `
     -MonitorToken $monitorToken
-
-Disconnect-ExchangeOnline -Confirm:$false -ErrorAction SilentlyContinue
 
 Write-Output "Posted $($userRows.Count) licensed-user rows and $($skuRows.Count) SKU-metric rows."
