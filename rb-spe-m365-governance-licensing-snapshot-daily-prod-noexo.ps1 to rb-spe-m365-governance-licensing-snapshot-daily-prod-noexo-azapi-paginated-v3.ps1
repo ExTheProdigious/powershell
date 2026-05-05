@@ -317,6 +317,7 @@ ForEach-Object {
         OverlappingSkuFlag_b           = $overlappingSkuFlag
     }
 }
+}
 
 # -----------------------------
 # Send to Azure Monitor
