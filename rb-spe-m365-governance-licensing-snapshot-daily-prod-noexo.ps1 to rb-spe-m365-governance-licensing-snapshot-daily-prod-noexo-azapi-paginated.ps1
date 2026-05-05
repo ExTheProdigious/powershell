@@ -159,10 +159,7 @@ $runId = [guid]::NewGuid().Guid
 
 # Preload EXO hold data
 
-Write-Output "Loading Exchange Online mailbox litigation hold status..."
-$litigationHoldLookup = Get-LitigationHoldLookup
-
-# SKU lookup
+Write-Output "Getting SKUs."
 
 $skus = Get-MgSubscribedSku -All
 
@@ -199,6 +196,8 @@ $skuDisplayNameMap = @{
     "VISIOCLIENT"                       = "Visio Plan 2"
     "VISIO_PLAN2_DEPT"                  = "Visio Plan 2"
 }
+
+Write-Output "Evaluating SKUs."
 
 $skuRows = foreach ($sku in $skus) {
     $skuId = [string]$sku.SkuId
@@ -248,6 +247,8 @@ $skuRows = foreach ($sku in $skus) {
 }
 
 # Users
+
+Write-Output "Getting users."
 
 $userRows = Get-MgUser `
     -PageSize 999 `
@@ -332,7 +333,5 @@ Send-LogIngestionBatch `
     -StreamName $SkuStreamName `
     -LogsIngestionEndpoint $LogsIngestionEndpoint `
     -MonitorToken $monitorToken
-
-Disconnect-ExchangeOnline -Confirm:$false -ErrorAction SilentlyContinue
 
 Write-Output "Posted $($userRows.Count) licensed-user rows and $($skuRows.Count) SKU-metric rows."
