@@ -249,20 +249,21 @@ $skuRows = foreach ($sku in $skus) {
 
 # Users
 
-$users = Get-MgUser `
-    -All `
-    -Property Id,DisplayName,UserPrincipalName,AssignedLicenses,LicenseAssignmentStates,UsageLocation,AccountEnabled,UserType,Department,CompanyName,OnPremisesSyncEnabled,SignInActivity
+$userRows = Get-MgUser `
+    -PageSize 999 `
+    -Property Id,DisplayName,UserPrincipalName,AssignedLicenses,LicenseAssignmentStates,UsageLocation,AccountEnabled,UserType,Department,CompanyName,OnPremisesSyncEnabled,SignInActivity |
+ForEach-Object {
 
-$userRows = foreach ($user in $users) {
-    if (-not $user.AssignedLicenses -or $user.AssignedLicenses.Count -eq 0) { continue }
+    $user = $_
+
+    if (-not $user.AssignedLicenses -or $user.AssignedLicenses.Count -eq 0) { return }
 
     $assignedSkuIds = @($user.AssignedLicenses | ForEach-Object { [string]$_.SkuId })
 
     $assignedSkuPartNumbers = foreach ($skuId in $assignedSkuIds) {
         if ($skuPartNumberMap.ContainsKey($skuId)) {
             $skuPartNumberMap[$skuId]
-        }
-        else {
+        } else {
             "UNKNOWN_SKU"
         }
     }
@@ -270,8 +271,7 @@ $userRows = foreach ($user in $users) {
     $assignedDisplayNames = foreach ($skuPartNumber in $assignedSkuPartNumbers) {
         if ($skuDisplayNameMap.ContainsKey($skuPartNumber)) {
             $skuDisplayNameMap[$skuPartNumber]
-        }
-        else {
+        } else {
             $skuPartNumber
         }
     }
@@ -287,8 +287,6 @@ $userRows = foreach ($user in $users) {
         $assignedSkuIds.Count -ne (@($assignedSkuIds | Sort-Object -Unique).Count) -or
         $assignedSkuPartNumbers.Count -gt 1
     )
-
-	$userId = [string]$user.Id
 
     [pscustomobject]@{
         SnapshotTime_t                 = $snapshotTime
