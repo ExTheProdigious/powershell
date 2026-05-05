@@ -251,6 +251,7 @@ $skuRows = foreach ($sku in $skus) {
 Write-Output "Getting users."
 
 $userRows = Get-MgUser `
+    -All `
     -PageSize 999 `
     -Property Id,DisplayName,UserPrincipalName,AssignedLicenses,LicenseAssignmentStates,UsageLocation,AccountEnabled,UserType,Department,CompanyName,OnPremisesSyncEnabled,SignInActivity |
 ForEach-Object {
