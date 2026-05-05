@@ -257,7 +257,9 @@ ForEach-Object {
 
     $user = $_
 
-    if (-not $user.AssignedLicenses -or $user.AssignedLicenses.Count -eq 0) { return }
+    Write-Verbose "Evaluating $($user.UserPrincipalName)"
+
+    if ($user.AssignedLicenses -and $user.AssignedLicenses.Count -gt 0) {
 
     $assignedSkuIds = @($user.AssignedLicenses | ForEach-Object { [string]$_.SkuId })
 
