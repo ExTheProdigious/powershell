@@ -168,33 +168,59 @@ $skuPartNumberMap = @{}
 
 # skuPartNumber -> friendly display name
 $skuDisplayNameMap = @{
+    # Identity & Security
     "AAD_PREMIUM_P2"                    = "Microsoft Entra ID P2"
     "ATA"                               = "Microsoft Defender for Identity"
     "DEFENDER_ENDPOINT_P1"              = "Microsoft Defender for Endpoint P1"
     "EMS"                               = "Enterprise Mobility + Security E3"
-    "ENTERPRISEPACK"                    = "Office 365 E3"
-    "FLOW_FREE"                         = "Microsoft Power Automate Free"
+    "INFORMATION_PROTECTION_COMPLIANCE" = "Microsoft Purview Suite"
+    "Microsoft_365_Copilot"             = "Microsoft 365 Copilot"
     "Microsoft_365_E3_Extra_Features"   = "Microsoft 365 E3 Extra Features"
-    "Microsoft_Teams_Rooms_Basic"       = "Microsoft Teams Rooms Basic"
-    "POWERAPPS_DEV"                     = "Microsoft Power Apps for Developer"
-    "STANDARDPACK"                      = "Office 365 E1"
-    "CCIBOTS_PRIVPREV_VIRAL"            = "Microsoft Copilot Studio Viral Trial"
-    "DYN365_FINANCIALS_ACCOUNTANT_SKU"  = "Dynamics 365 Business Central External Accountant"
+
+    # Collaboration & Productivity
+    "ENTERPRISEPACK"                    = "Office 365 E3"
     "EXCHANGEENTERPRISE"                = "Exchange Online (Plan 2)"
-    "MCOCAP"                            = "Microsoft Teams Shared Devices"
-    "MCOEV"                             = "Microsoft Teams Phone Standard"
-    "Microsoft_Teams_Rooms_Pro"         = "Microsoft Teams Rooms Pro"
-    "PBI_PREMIUM_PER_USER"              = "Power BI Premium Per User"
-    "PBI_PREMIUM_PER_USER_ADDON"        = "Power BI Premium Per User Add-On"
-    "PHONESYSTEM_VIRTUALUSER"           = "Microsoft Teams Phone Resource Account"
-    "POWER_BI_PRO"                      = "Power BI Pro"
-    "POWER_BI_STANDARD"                 = "Microsoft Fabric (Free)"
-    "POWERAPPS_PER_USER"                = "Power Apps Premium"
-    "POWERAPPS_VIRAL"                   = "Microsoft Power Apps Plan 2 Trial"
-    "POWERAUTOMATE_ATTENDED_RPA"        = "Power Automate Premium"
-    "PROJECTPROFESSIONAL"               = "Planner and Project Plan 3"
+    "STANDARDPACK"                      = "Office 365 E1"
     "VISIOCLIENT"                       = "Visio Plan 2"
     "VISIO_PLAN2_DEPT"                  = "Visio Plan 2"
+    "PROJECTPROFESSIONAL"               = "Planner and Project Plan 3"
+    "WINDOWS_STORE"                     = "Windows Store"
+
+    # Microsoft Teams & Voice
+    "MCOEV"                             = "Microsoft Teams Phone Standard"
+    "MCOPSTN1"                          = "Microsoft Teams Domestic Calling Plan"
+    "MCOPSTN2"                          = "Microsoft Teams Domestic and International Calling Plan"
+    "PHONESYSTEM_VIRTUALUSER"           = "Microsoft Teams Phone Resource Account"
+    "MCOCAP"                            = "Microsoft Teams Shared Devices"
+    "Microsoft_Teams_Rooms_Pro"         = "Microsoft Teams Rooms Pro"
+    "Microsoft_Teams_Audio_Conferencing_select_dial_out" = "Microsoft Teams Audio Conferencing (Dial-Out)"
+
+    # Power Platform & Fabric
+    "POWER_BI_PRO"                      = "Power BI Pro"
+    "PBI_PREMIUM_PER_USER"              = "Power BI Premium Per User"
+    "PBI_PREMIUM_PER_USER_ADDON"        = "Power BI Premium Per User Add-On"
+    "POWER_BI_STANDARD"                 = "Microsoft Fabric (Free)"
+    "POWERAPPS_PER_USER"                = "Power Apps Premium"
+    "POWERAPPS_PER_APP"                 = "Power Apps per App"
+    "POWERAPPS_DEV"                     = "Microsoft Power Apps for Developer"
+    "POWERAPPS_VIRAL"                   = "Microsoft Power Apps Plan 2 Trial"
+    "POWERAPPS_PORTALS_LOGIN"           = "Power Pages Login"
+    "POWERAPPS_PORTALS_PAGEVIEW"        = "Power Pages Page View"
+    "POWERAUTOMATE_ATTENDED_RPA"        = "Power Automate Premium"
+    "POWERAUTOMATE_ATTENDED_RPA_DEPT"   = "Power Automate Premium (Dept)"
+    "FLOW_FREE"                         = "Microsoft Power Automate Free"
+    "CCIBOTS_PRIVPREV_VIRAL"            = "Microsoft Copilot Studio Viral Trial"
+
+    # Dynamics 365
+    "DYN365_BUSCENTRAL_ESSENTIAL"       = "Dynamics 365 Business Central Essential"
+    "DYN365_FINANCIALS_ACCOUNTANT_SKU"  = "Dynamics 365 Business Central External Accountant"
+    "DYN365_BUSCENTRAL_ADD_ENV_ADDON"   = "Dynamics 365 Business Central Additional Environment"
+
+    # Storage & Capacity
+    "CDS_DB_CAPACITY"                   = "Dataverse Database Capacity"
+    "CDS_FILE_CAPACITY"                 = "Dataverse File Capacity"
+    "CDS_LOG_CAPACITY"                  = "Dataverse Log Capacity"
+    "SHAREPOINTSTORAGE"                 = "SharePoint Extra Storage"
 }
 
 Write-Output "Evaluating SKUs."
