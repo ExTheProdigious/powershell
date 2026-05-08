@@ -1,11 +1,11 @@
-$DcrImmutableIdUsers = "dcr-ed4492d3cd6a46debdf6c61c0f2780e0"
-$DcrImmutableIdSku = "dcr-ed4492d3cd6a46debdf6c61c0f2780e0"
-$LogsIngestionEndpoint = "https://dce-spe-m365-prod-n9ow.westus2-1.ingest.monitor.azure.com"
+$DcrImmutableIdUsers = "dcr-3a57c403c47041c38fbcee41963fb9f9"
+$DcrImmutableIdSku = "dcr-3a57c403c47041c38fbcee41963fb9f9"
+$LogsIngestionEndpoint = "https://dce-spe-m365-prod-bywz.westus2-1.ingest.monitor.azure.com"
 $UsersStreamName = "Custom-SPE_M365_LicensedUsers_CL"
 $SkuStreamName = "Custom-SPE_M365_LicenseSkuMetrics_CL"
 $SubscriptionIdOrName = "azr-spe-m365-prd"
 $ExchangeOrganization = "spe.onmicrosoft.com"
-$ManagedIdentityAccountId = "1a14f2ab-7c6a-4c07-8233-afd7bcc03592"
+$ManagedIdentityAccountId = "45965a03-86a9-4c53-982b-0df66561dc85"
 
 $ErrorActionPreference = 'Stop'
 
