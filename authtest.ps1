@@ -1,6 +1,6 @@
 $SubscriptionIdOrName = "azr-spe-m365-prd"
 $ExchangeOrganization = "spe.onmicrosoft.com"
-$ManagedIdentityAccountId = "1a14f2ab-7c6a-4c07-8233-afd7bcc03592"
+$ManagedIdentityAccountId = "45965a03-86a9-4c53-982b-0df66561dc85"
 
 Write-Output "RUNBOOK STARTED"
 
