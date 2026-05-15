@@ -26,7 +26,7 @@ catch {
 
 try {
     Write-Output "Attempting EXO login..."
-    Connect-ExchangeOnline -ManagedIdentity -Organization $ExchangeOrganization -ManagedIdentityAccountId $ManagedIdentityAccountId -ShowBanner:$false | Out-Null
+    Connect-ExchangeOnline -ManagedIdentity -Organization "spe.onmicrosoft.com" -ManagedIdentityAccountId "45965a03-86a9-4c53-982b-0df66561dc85"
     Write-Output "EXO login SUCCESS"
 }
 catch {
