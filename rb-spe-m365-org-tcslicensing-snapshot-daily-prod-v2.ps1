@@ -70,7 +70,7 @@ function ConnectToSharePoint
         Write-Output "Trying to connect to $SiteUrl"
          $SiteUrl =$spSiteUrl + "/sites/" +$spSiteName
         #Connect-PnPOnline -Url $SiteUrl -ClientId $clientId -Thumbprint $certThumbprint -Tenant $tenantId  -WarningAction Ignore
-        Connect-PnPOnline -Url $Url -ManagedIdentity -UserAssignedManagedIdentityObjectId $ManagedIdentityObjectId
+        Connect-PnPOnline -Url $Url -ManagedIdentity -UserAssignedManagedIdentityClientId $ManagedIdentityClientId
         Write-Output "Connected to $SiteUrl"
     }
     catch{ 
