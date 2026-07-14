@@ -22,7 +22,7 @@ Pre-requisites
  6. Get Unlicensed Users
 #>
  
-#$tenantId = Get-AutomationVariable -Name 'TenantID' #"f93f5d4d-6bff-47c3-bb89-a8beeabf78f8"
+$tenantId = "f93f5d4d-6bff-47c3-bb89-a8beeabf78f8"
 $ManagedIdentityClientId  = "24ff3033-1beb-4758-a22f-bfb5a73b6f7c"
 $ManagedIdentityObjectId  = "45965a03-86a9-4c53-982b-0df66561dc85" # PnP user-assigned MI support commonly uses object/principal ID
 $spSiteUrl = "https://spe.sharepoint.com"
@@ -33,52 +33,38 @@ $DestinationURL ="$spSiteUrl/sites/$spSiteName/$spLibraryName"
 
 
 <# 1. Connect to Tenant - Requires Azure App or any other secure method #>
-Function ConnectToGraph()
-{
-   try
-    {
-          #Connect-MgGraph -ClientId $clientId -TenantID $TenantId -CertificateThumbprint $certThumbprint  -Nowelcome
-          Connect-MgGraph -Identity -ClientId $ManagedIdentityClientId -Nowelcome
-          Write-Output "Connected to Graph"
-       <# $graphtokenBody = @{
-            Grant_Type    = "client_credentials"
-            Client_Id     = $clientId
-            Client_Secret = $clientSecret
-            Scope         = "https://graph.microsoft.com/.default"
+Function ConnectToGraph() {
+    try {
+        Write-Output "Connecting to Microsoft Graph..."
+        Connect-MgGraph -Identity -ClientId $ManagedIdentityClientId -NoWelcome
+        Write-Output "Connected to Graph via Managed Identity."
+        Write-Output "Acquiring access token for REST API calls..."
+        Connect-AzAccount -Identity -AccountId $ManagedIdentityClientId -Tenant $TenantId | Out-Null
+        $tokenContext = Get-AzAccessToken -ResourceUrl "https://graph.microsoft.com"
+        
+        # Build the global auth header used in subsequent REST calls
+        $global:authHeader = @{
+            'Authorization'    = "Bearer $($tokenContext.Token)"
+            'ConsistencyLevel' = "eventual"
         }
-
-        $jsonBody = $graphtokenBody #| ConvertTo-Json
-        $oauth = Invoke-RestMethod -Method Post -Uri "https://login.microsoftonline.com/$TenantId/oauth2/v2.0/token" -Body $jsonBody 
-        $global:authHeader = @{'Authorization'="$($oauth.token_type) $($oauth.access_token)"}
-        $global:authHeader["ConsistencyLevel"] = "eventual"     #>      
-      
-   }
-  
+        Write-Output "Access token successfully retrieved."
+    }
     catch {
-            Write-Error $Error[0]
-            Write-Output "Error in connecting to Microsoft Graph"
-            $Error=$null
-          }
+        Write-Error "Error in connecting to Microsoft Graph: $_"
+    }
 }
 
 <# 2. Connect to SharePoint - Requires a SP Site to upload the generated reports #>
-function ConnectToSharePoint
-{
+Function ConnectToSharePoint() {
     $SiteUrl = "$spSiteUrl/sites/$spSiteName"
-    try 
-    {
+    try {
         Write-Output "Trying to connect to $SiteUrl"
-         $SiteUrl =$spSiteUrl + "/sites/" +$spSiteName
-        #Connect-PnPOnline -Url $SiteUrl -ClientId $clientId -Thumbprint $certThumbprint -Tenant $tenantId  -WarningAction Ignore
-        Connect-PnPOnline -Url $Url -ManagedIdentity -UserAssignedManagedIdentityClientId $ManagedIdentityClientId
-        Write-Output "Connected to $SiteUrl"
+        Connect-PnPOnline -Url $SiteUrl -ManagedIdentity -UserAssignedManagedIdentityClientId $ManagedIdentityClientId
+        Write-Output "Connected to SharePoint Online."
     }
-    catch{ 
-            Write-Error $Error[0]
-             $Error=$null
-            Write-Output "Error in connecting to SharePoint Online"
-           
-            }
+    catch { 
+        Write-Error "Error in connecting to SharePoint Online: $_"
+    }
 }
 
 <# 3. Fetch all Service Plan details from Get-MgSubscribedSku API #>
