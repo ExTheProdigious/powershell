@@ -179,12 +179,14 @@ $skuDisplayNameMap = @{
 
     # Collaboration & Productivity
     "ENTERPRISEPACK"                    = "Office 365 E3"
+    "SPE_E5"                            = "Microsoft 365 E5"
     "EXCHANGEENTERPRISE"                = "Exchange Online (Plan 2)"
     "STANDARDPACK"                      = "Office 365 E1"
     "VISIOCLIENT"                       = "Visio Plan 2"
     "VISIO_PLAN2_DEPT"                  = "Visio Plan 2"
     "PROJECTPROFESSIONAL"               = "Planner and Project Plan 3"
     "WINDOWS_STORE"                     = "Windows Store"
+    "AGENT_365"                         = "Agent 365"
 
     # Microsoft Teams & Voice
     "MCOEV"                             = "Microsoft Teams Phone Standard"
